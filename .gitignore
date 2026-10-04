@@ -1,0 +1,28 @@
+# Secrets / local configuration
+.env
+backend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Generated/local runtime data
+storage/
+data/
+*.log
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
