@@ -112,7 +112,7 @@ export default function LandingClient() {
       {/* Footer */}
       <footer className="mt-auto border-t border-navy-800 bg-navy-950/60">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-5 py-5 text-xs text-navy-300 md:flex-row">
-          <p>© 2026 Central Public Chemical Limited, Ministry of Petroleum and Gas, Government of India.</p>
+          <p>© 2026 Chennai Petroleum Corporation Limited (CPCL), Ministry of Petroleum and Natural Gas, Government of India.</p>
           <div className="flex gap-5">
             <Link href="/privacy" className="hover:text-white">
               Privacy Policy

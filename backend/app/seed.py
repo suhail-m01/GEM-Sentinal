@@ -9,9 +9,13 @@ import os
 import random
 import sys
 from datetime import date, datetime, timedelta, timezone
+from typing import TYPE_CHECKING
 
 from .core.db import Base, SessionLocal, engine, utcnow
 from .core.security import encrypt_field, hash_password, mask_gstin, mask_pan, mask_udyam
+
+if TYPE_CHECKING:
+    from PIL import Image
 from .models import (
     Application,
     ApplicationStatusHistory,
@@ -589,7 +593,7 @@ def _seed_all(db):
         ("GAIL (India) Ltd", "GAIL", "CPSE", "GAIL Corporate Procurement, New Delhi", bands_psu()),
         ("Oil India Ltd", "OIL", "CPSE", "Oil India Procurement Division, Kolkata", bands_psu()),
         ("Engineers India Ltd", "EIL", "CPSE", "EIL Procurement Department, New Delhi", bands_psu()),
-        ("CPCL Refinery & Petrochemicals Ltd", "CPCL", "CPSE", "CPCL Procurement Division, Belagavi", bands_psu()),
+        ("Chennai Petroleum Corporation Limited (CPCL)", "CPCL", "CPSE", "CPCL Procurement Division, Belagavi", bands_psu()),
     ]
     orgs = {}
     for name, code, otype, division, bands in ORG_DEFS:
