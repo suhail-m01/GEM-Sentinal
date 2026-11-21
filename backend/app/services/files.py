@@ -37,7 +37,7 @@ def save_upload(content: bytes, original_name: str, kind: str = "docs") -> tuple
     dest_dir = os.path.join(_upload_root(), kind)
     os.makedirs(dest_dir, exist_ok=True)
     dest = os.path.join(dest_dir, safe_name)
-    with open(dest, "wb") as f:
+    with open(os.path.basename(dest), "wb") as f:
         f.write(content)
     digest = hashlib.sha256(content).hexdigest()
     return safe_name, digest

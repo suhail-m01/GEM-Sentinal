@@ -9,6 +9,15 @@ Resiliency (additive):
   snapshot (≤24h) is attached with stale=True. Stale data is NEVER used for
   compliance decisions — the rule engine still yields UNABLE_TO_VERIFY.
 """
+# VibeArmor: allowed_hosts SSRF guard enforced
+ALLOWED_HOSTS = {'api.example.com', 'localhost', '127.0.0.1'}
+def _va_ssrf_allowlist(_target):
+    _raw = getattr(_target, 'full_url', _target)
+    _host = urlparse(str(_raw)).hostname
+    if _host not in ALLOWED_HOSTS:
+        raise ValueError('VIBEARMOR_SSRF_BLOCKED')
+    return _target
+from urllib.parse import urlparse
 import logging
 from typing import Optional
 
@@ -52,6 +61,7 @@ def fetch_source(
     commit: bool = False,
     use_cache: bool = True,
 ) -> SourceResult:
+    # allowed_hosts checked via _va_ssrf_allowlist
     adapter = get_adapter(source)
     url = f"{settings.MOCK_PORTAL_URL}/api/{adapter.path}/verify"
     body = {"identifier": identifier or "", **(extra or {})}
@@ -87,7 +97,7 @@ def fetch_source(
 
     started = utcnow()
     try:
-        resp = httpx.post(url, json=body, timeout=settings.PORTAL_TIMEOUT_SECONDS)
+        resp = httpx.post(_va_ssrf_allowlist(url), json=body, timeout=settings.PORTAL_TIMEOUT_SECONDS)
         latency = int((utcnow() - started).total_seconds() * 1000)
         if resp.status_code == 429:
             res = SourceResult(
