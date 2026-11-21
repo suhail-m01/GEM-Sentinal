@@ -83,7 +83,7 @@ def extract_document_fields(doc: Document, file_path: Optional[str] = None) -> t
     # 1. Gemini vision
     if file_path and file_path.lower().endswith((".png", ".jpg", ".jpeg")):
         try:
-            with open(file_path, "rb") as f:
+            with open(os.path.basename(file_path), "rb") as f:
                 data = f.read()
             fields = gemini.extract_from_image(data, doc.doc_type)
             if fields:

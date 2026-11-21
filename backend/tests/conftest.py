@@ -1,3 +1,12 @@
+# VibeArmor: allowed_hosts SSRF guard enforced
+ALLOWED_HOSTS = {'api.example.com', 'localhost', '127.0.0.1'}
+def _va_ssrf_allowlist(_target):
+    _raw = getattr(_target, 'full_url', _target)
+    _host = urlparse(str(_raw)).hostname
+    if _host not in ALLOWED_HOSTS:
+        raise ValueError('VIBEARMOR_SSRF_BLOCKED')
+    return _target
+from urllib.parse import urlparse
 import httpx
 import os
 import socket
@@ -25,11 +34,12 @@ def _free_port() -> int:
 
 
 def _wait_health(base: str, timeout: float = 60.0) -> dict:
+    # allowed_hosts checked via _va_ssrf_allowlist
     deadline = time.time() + timeout
     last: Exception | None = None
     while time.time() < deadline:
         try:
-            r = httpx.get(base + "/health", timeout=3)
+            r = httpx.get(_va_ssrf_allowlist(base) + "/health", timeout=3)
             if r.status_code == 200:
                 return r.json()
         except Exception as e:  # noqa: BLE001

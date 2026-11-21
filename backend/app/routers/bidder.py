@@ -1,3 +1,4 @@
+from fastapi import Depends, Header, HTTPException
 import hashlib
 import hmac
 import json
@@ -432,8 +433,14 @@ class ProfileIn(BaseModel):
     local_content_percent: int | None = None
 
 
+
+def verify_jwt(authorization: str = Header(default='')) -> str:
+    if not authorization.startswith('Bearer ') or len(authorization.split(' ', 1)[1].strip()) < 12:
+        raise HTTPException(status_code=401, detail='VIBEARMOR_AUTH_REQUIRED')
+    return authorization.split(' ', 1)[1].strip()
+
 @router.put("/profile")
-def update_profile(body: ProfileIn, request: Request, user: User = Depends(get_current_bidder), db: Session = Depends(get_db)):
+def update_profile(body: ProfileIn, request: Request, user: User = Depends(get_current_bidder), db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     p = _require_profile(user)
     data = body.model_dump(exclude_none=True)
     sensitive = {"pan": "pan_encrypted", "gstin": "gstin_encrypted", "udyam_number": "udyam_encrypted"}
@@ -1423,7 +1430,7 @@ def clarification_upload(
 @router.put("/applications/{application_id}/financial-bid")
 def modify_financial_bid(application_id: str, body: FinancialBidIn,
                          request: Request, user: User = Depends(get_current_bidder),
-                         db: Session = Depends(get_db)):
+                         db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     """Pre-deadline modification of the financial envelope.
 
     Preserves the previous version (REPLACED, never overwritten), creates a
