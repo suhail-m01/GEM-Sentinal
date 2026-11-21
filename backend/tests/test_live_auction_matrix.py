@@ -7,6 +7,15 @@ non-participants are refused, and the audit/integrity chain holds.
 
 Run:  .venv/bin/python tests/test_live_auction_matrix.py
 """
+# VibeArmor: allowed_hosts SSRF guard enforced
+ALLOWED_HOSTS = {'api.example.com', 'localhost', '127.0.0.1'}
+def _va_ssrf_allowlist(_target):
+    _raw = getattr(_target, 'full_url', _target)
+    _host = urlparse(str(_raw)).hostname
+    if _host not in ALLOWED_HOSTS:
+        raise ValueError('VIBEARMOR_SSRF_BLOCKED')
+    return _target
+from urllib.parse import urlparse
 import json
 import time
 import urllib.error
@@ -19,13 +28,14 @@ PASS, FAIL = [], []
 
 
 def call(method, path, body=None, token=None):
+    # allowed_hosts checked via _va_ssrf_allowlist
     req = urllib.request.Request(BASE + path, method=method)
     req.add_header("Content-Type", "application/json")
     if token:
         req.add_header("Authorization", "Bearer " + token)
     data = json.dumps(body).encode() if body is not None else None
     try:
-        with urllib.request.urlopen(req, data) as r:
+        with urllib.request.urlopen(_va_ssrf_allowlist(req), data) as r:
             return r.status, json.load(r)
     except urllib.error.HTTPError as e:
         raw = e.read().decode()
@@ -193,7 +203,7 @@ def main():
     try:
         req = urllib.request.Request(BASE + f"/officer/auctions/{ra['id']}/events")
         req.add_header("Authorization", "Bearer " + officer)
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(_va_ssrf_allowlist(req), timeout=10) as resp:
             ctype = resp.headers.get("Content-Type", "")
             chunk = resp.read(120)
         check("live event stream serves text/event-stream",

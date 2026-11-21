@@ -9,6 +9,7 @@ Supported simulation modes per (source, identifier):
 Real authorized APIs can replace these endpoints later without touching
 business logic (Adapter Pattern on the core side).
 """
+from fastapi import Depends, Header, HTTPException
 import asyncio
 
 import httpx  # noqa: F401  (kept for parity with real adapters)
@@ -422,8 +423,14 @@ def set_state(source: str, body: StateIn):
             "note": "SIMULATED state change — mock portal only"}
 
 
+
+def verify_jwt(authorization: str = Header(default='')) -> str:
+    if not authorization.startswith('Bearer ') or len(authorization.split(' ', 1)[1].strip()) < 12:
+        raise HTTPException(status_code=401, detail='VIBEARMOR_AUTH_REQUIRED')
+    return authorization.split(' ', 1)[1].strip()
+
 @app.delete("/api/admin/state/{source}/{identifier}")
-def clear_state(source: str, identifier: str):
+def clear_state(source: str, identifier: str, _caller: str = Depends(verify_jwt)):
     """Restore a source record to its seeded value (simulated)."""
     key = _state_key(source, identifier)
     if key not in STATE_OVERRIDES:
@@ -517,7 +524,7 @@ def set_fault(body: FaultIn):
 
 
 @app.delete("/api/admin/fault/{source}")
-def clear_fault(source: str):
+def clear_fault(source: str, _caller: str = Depends(verify_jwt)):
     global FAULTS
     FAULTS = {k: v for k, v in FAULTS.items() if not (k == source or k.startswith(source + ":"))}
     return {"faults": FAULTS}

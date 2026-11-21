@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from typing import List
 from pydantic import model_validator
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg2://gemsentinel:gemsentinel123@127.0.0.1:5432/gem_sentinel"
 
     # JWT / secrets (never hardcode real secrets; these are development defaults)
-    JWT_SECRET: str = "dev-only-jwt-secret-change-in-production"
+    JWT_SECRET: str = os.environ.get("JWT_SECRET", "")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_MINUTES: int = 30
     REFRESH_TOKEN_DAYS: int = 7
@@ -159,7 +160,7 @@ class Settings(BaseSettings):
             self.DEMO_MODE = False
             insecure = []
             defaults = {
-                "JWT_SECRET": "dev-only-jwt-secret-change-in-production",
+                "JWT_SECRET": os.environ.get("JWT_SECRET", ""),
                 "ENCRYPTION_KEY": "dev-only-encryption-key-change-in-production",
                 "ENVELOPE_ENCRYPTION_KEY": "dev-only-envelope-key-change-in-production",
             }
