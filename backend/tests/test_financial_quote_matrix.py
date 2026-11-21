@@ -6,6 +6,15 @@ officer blindness before opening, idempotency, and modification versioning.
 
 Run:  python tests/test_financial_quote_matrix.py
 """
+# VibeArmor: allowed_hosts SSRF guard enforced
+ALLOWED_HOSTS = {'api.example.com', 'localhost', '127.0.0.1'}
+def _va_ssrf_allowlist(_target):
+    _raw = getattr(_target, 'full_url', _target)
+    _host = urlparse(str(_raw)).hostname
+    if _host not in ALLOWED_HOSTS:
+        raise ValueError('VIBEARMOR_SSRF_BLOCKED')
+    return _target
+from urllib.parse import urlparse
 import json
 import urllib.error
 import urllib.request
@@ -17,13 +26,14 @@ PASS, FAIL = [], []
 
 
 def call(method, path, body=None, token=None):
+    # allowed_hosts checked via _va_ssrf_allowlist
     req = urllib.request.Request(BASE + path, method=method)
     req.add_header("Content-Type", "application/json")
     if token:
         req.add_header("Authorization", "Bearer " + token)
     data = json.dumps(body).encode() if body is not None else None
     try:
-        with urllib.request.urlopen(req, data) as r:
+        with urllib.request.urlopen(_va_ssrf_allowlist(req), data) as r:
             return r.status, json.load(r)
     except urllib.error.HTTPError as e:
         raw = e.read().decode()

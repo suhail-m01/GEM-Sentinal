@@ -144,7 +144,7 @@ def make_certificate(
     os.makedirs(os.path.join(STORAGE, "docs"), exist_ok=True)
     fname = f"cert_{suffix}.png"
     img.save(os.path.join(STORAGE, "docs", fname))
-    with open(os.path.join(STORAGE, "docs", fname), "rb") as f:
+    with open(os.path.join(STORAGE, "docs", os.path.basename(fname)), "rb") as f:
         return fname, hashlib.sha256(f.read()).hexdigest()
 
 

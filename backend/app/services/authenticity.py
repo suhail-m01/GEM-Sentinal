@@ -266,7 +266,7 @@ def analyze_document(
 
     # 1. SHA-256 fingerprint + duplicate detection
     if file_path and os.path.isfile(file_path):
-        with open(file_path, "rb") as f:
+        with open(os.path.basename(file_path), "rb") as f:
             digest = hashlib.sha256(f.read()).hexdigest()
         findings["sha256"] = digest
         doc.document_hash = digest

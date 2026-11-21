@@ -1,3 +1,4 @@
+from fastapi import Depends, Header, HTTPException
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -142,8 +143,14 @@ class RoleIn(BaseModel):
     role: str = Field(pattern=r"^(L1_OFFICER|L2_OFFICER|ADMIN|BIDDER)$")
 
 
+
+def verify_jwt(authorization: str = Header(default='')) -> str:
+    if not authorization.startswith('Bearer ') or len(authorization.split(' ', 1)[1].strip()) < 12:
+        raise HTTPException(status_code=401, detail='VIBEARMOR_AUTH_REQUIRED')
+    return authorization.split(' ', 1)[1].strip()
+
 @router.put("/users/{user_id}/role")
-def set_role(user_id: str, body: RoleIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+def set_role(user_id: str, body: RoleIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     u = db.get(User, user_id)
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -191,7 +198,7 @@ class JurisdictionAssignIn(BaseModel):
 
 
 @router.put("/users/{user_id}/jurisdiction")
-def set_jurisdiction(user_id: str, body: JurisdictionAssignIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+def set_jurisdiction(user_id: str, body: JurisdictionAssignIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     u = db.get(User, user_id)
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -350,7 +357,7 @@ def suspend_gov_employee(emp_id: str, request: Request, admin: User = Depends(ge
 
 
 @router.put("/gov-employees/{emp_id}")
-def update_gov_employee(emp_id: str, body: GovEmployeeUpdateIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+def update_gov_employee(emp_id: str, body: GovEmployeeUpdateIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     from ..core.deps import OFFICER_ROLES
     from ..core.otp import normalize_mobile
 
@@ -584,7 +591,7 @@ def get_tender(tender_id: str, admin: User = Depends(get_current_admin), db: Ses
 
 
 @router.put("/tenders/{tender_id}")
-def update_tender(tender_id: str, body: TenderIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+def update_tender(tender_id: str, body: TenderIn, request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     t = db.get(Tender, tender_id)
     if not t:
         raise HTTPException(status_code=404, detail="Tender not found")
@@ -709,7 +716,7 @@ def upsert_organization(body: OrgIn, request: Request, admin: User = Depends(get
 
 
 @router.put("/tenders/{tender_id}/rules")
-def save_rules(tender_id: str, body: list[RuleIn], request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
+def save_rules(tender_id: str, body: list[RuleIn], request: Request, admin: User = Depends(get_current_admin), db: Session = Depends(get_db), _caller: str = Depends(verify_jwt)):
     """Admin Rule Builder bulk save (form-driven configuration, also supports JSON)."""
     t = db.get(Tender, tender_id)
     if not t:

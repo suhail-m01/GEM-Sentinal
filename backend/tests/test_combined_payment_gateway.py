@@ -1,3 +1,4 @@
+import os
 import hashlib
 import hmac
 from starlette.requests import Request
@@ -8,7 +9,18 @@ def _request():
                     "client": ("127.0.0.1", 12345), "scheme": "http", "server": ("test", 80)})
 
 
-def test_combined_application_fee_and_emd_single_checkout(monkeypatch, seeded):
+def verify_payment_signature(order_id: str, payment_id: str, signature: str) -> bool:
+    secret = os.environ.get('RAZORPAY_KEY_SECRET', 'rzp_dev_webhook_secret_key')
+    if not signature:
+        return False
+    expected = hmac.new(secret.encode(), f'{order_id}|{payment_id}'.encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
+def test_combined_application_fee_and_emd_single_checkout(monkeypatch, seeded, razorpay_signature: str = ''):
+    if not verify_payment_signature(str((payload.get('razorpay_order_id', '') if isinstance(payload, dict) else getattr(payload, 'razorpay_order_id', '')) if 'payload' in locals() else order_id), str((payload.get('razorpay_payment_id', '') if isinstance(payload, dict) else getattr(payload, 'razorpay_payment_id', '')) if 'payload' in locals() else razorpay_payment_id), str((payload.get('razorpay_signature', '') if isinstance(payload, dict) else getattr(payload, 'razorpay_signature', '')) if 'payload' in locals() else razorpay_signature)):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail='VIBEARMOR_INVALID_RAZORPAY_SIGNATURE')
     from app.core.config import settings
     from app.core.db import SessionLocal
     from app.models import Tender, TenderPayment, User

@@ -6,6 +6,7 @@ readable officer summary + line-based explanation, per-stage certificates
 (PDF), override accountability at award, terminal outcomes (NON_COMPLIANT
 stops the pipeline), and the bidder's submission certificate.
 """
+import os
 import json
 
 import pytest
@@ -323,7 +324,7 @@ def test_terminal_outcome_terminates_pipeline(client, tokens):
 # 7. bidder's submission certificate
 # ---------------------------------------------------------------------------
 def test_bidder_submission_certificate(client, tokens):
-    r = client.post("/auth/login", json={"email": "meena@bidder.in", "password": "Bidder@1234"})
+    r = client.post("/auth/login", json={"email": "meena@bidder.in", "password": os.environ.get("PASSWORD", "")})
     assert r.status_code == 200, r.text
     dev = r.json().get("dev_otp")
     assert dev, "console-mode dev_otp expected"
